@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jumia Competitor Tracker</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        header { background: #f68b1e; color: white; padding: 20px; text-align: center; margin-bottom: 30px; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; }
+        .stat-card h3 { font-size: 2em; color: #f68b1e; }
+        .section { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .section h2 { margin-bottom: 15px; color: #333; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f8f8; font-weight: 600; }
+        .btn { background: #f68b1e; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .btn:hover { background: #e07a0e; }
+        .btn-secondary { background: #666; }
+        .in-stock { color: #27ae60; font-weight: 600; }
+        .out-of-stock { color: #e74c3c; font-weight: 600; }
+        .price { font-weight: 600; color: #f68b1e; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #f68b1e; }
+        .message { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .message.success { background: #d4edda; color: #155724; }
+        .message.error { background: #f8d7da; color: #721c24; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab { padding: 10px 20px; background: #eee; border: none; border-radius: 4px; cursor: pointer; }
+        .tab.active { background: #f68b1e; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Jumia Competitor Tracker</h1>
+        <p>Track competitor prices and stock on Jumia Kenya</p>
+    </header>
+
+    <div class="container">
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <h3 id="stat-products">0</h3>
+                <p>Products Tracked</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="stat-competitors">0</h3>
+                <p>Competitors</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="stat-snapshots">0</h3>
+                <p>Price Snapshots</p>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('track')">Track Products</button>
+            <button class="tab" onclick="showTab('discover')">Discover</button>
+            <button class="tab" onclick="showTab('history')">Price History</button>
+        </div>
+
+        <div id="track" class="tab-content active">
+            <div class="section">
+                <h2>Add Competitor Product</h2>
+                <div class="form-group">
+                    <label>Product Name (Your Product)</label>
+                    <input type="text" id="product-name" placeholder="e.g., Samsung Galaxy A16">
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="product-category">
+                        <option value="phones">Phones & Tablets</option>
+                        <option value="computing">Computing</option>
+                        <option value="appliances">Home Appliances</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Competitor Product URL (Jumia)</label>
+                    <input type="url" id="competitor-url" placeholder="https://www.jumia.co.ke/product-name-123456.html">
+                </div>
+                <button class="btn" onclick="addProduct()">Add Product</button>
+                <div id="add-message"></div>
+            </div>
+
+            <div class="section">
+                <h2>Tracked Products</h2>
+                <button class="btn btn-secondary" onclick="scrapeAll()">Scrape All Now</button>
+                <div style="margin-top: 15px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Competitor URL</th>
+                                <th>Last Scraped</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-table">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="discover" class="tab-content">
+            <div class="section">
+                <h2>Discover Products</h2>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="discover-category">
+                        <option value="phones">Phones & Tablets</option>
+                        <option value="computing">Computing</option>
+                        <option value="appliances">Home Appliances</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Max Products</label>
+                    <input type="number" id="discover-max" value="10" min="1" max="50">
+                </div>
+                <button class="btn" onclick="discoverProducts()">Discover</button>
+                <div id="discover-results"></div>
+            </div>
+        </div>
+
+        <div id="history" class="tab-content">
+            <div class="section">
+                <h2>Price History</h2>
+                <div class="form-group">
+                    <label>Select Product</label>
+                    <select id="history-product" onchange="loadHistory()"></select>
+                </div>
+                <div id="history-results"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000/api';
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        async function loadStats() {
+            try {
+                const res = await fetch(`${API_URL}/stats/`);
+                const data = await res.json();
+                document.getElementById('stat-products').textContent = data.total_products_tracked;
+                document.getElementById('stat-competitors').textContent = data.total_competitors;
+                document.getElementById('stat-snapshots').textContent = data.total_price_snapshots;
+            } catch (e) {
+                console.error('Failed to load stats:', e);
+            }
+        }
+
+        async function loadProducts() {
+            try {
+                const res = await fetch(`${API_URL}/competitor-products/`);
+                const products = await res.json();
+                const tbody = document.getElementById('products-table');
+                tbody.innerHTML = products.map(p => `
+                    <tr>
+                        <td>${p.id}</td>
+                        <td><a href="${p.competitor_product_url}" target="_blank">${p.competitor_product_url.substring(0, 50)}...</a></td>
+                        <td>${p.last_scraped_at ? new Date(p.last_scraped_at).toLocaleString() : 'Never'}</td>
+                        <td>
+                            <button class="btn" onclick="scrapeProduct(${p.id})">Scrape</button>
+                        </td>
+                    </tr>
+                `join('');
+
+                // Update history dropdown
+                const select = document.getElementById('history-product');
+                select.innerHTML = products.map(p => `<option value="${p.id}">Product ${p.id}</option>`).join('');
+            } catch (e) {
+                console.error('Failed to load products:', e);
+            }
+        }
+
+        async function addProduct() {
+            const name = document.getElementById('product-name').value;
+            const category = document.getElementById('product-category').value;
+            const url = document.getElementById('competitor-url').value;
+
+            if (!name || !url) {
+                showMessage('add-message', 'Please fill all fields', 'error');
+                return;
+            }
+
+            try {
+                // First, get or create competitor (simplified - using default)
+                const res = await fetch(`${API_URL}/competitor-products/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        product_id: 1, // Simplified - should create product first
+                        competitor_id: 1, // Simplified - should create competitor first
+                        competitor_product_url: url
+                    })
+                });
+
+                if (res.ok) {
+                    showMessage('add-message', 'Product added successfully!', 'success');
+                    loadProducts();
+                    loadStats();
+                } else {
+                    const err = await res.json();
+                    showMessage('add-message', err.detail || 'Failed to add product', 'error');
+                }
+            } catch (e) {
+                showMessage('add-message', 'Network error', 'error');
+            }
+        }
+
+        async function scrapeProduct(id) {
+            try {
+                const res = await fetch(`${API_URL}/scrape/${id}`, { method: 'POST' });
+                const data = await res.json();
+                alert(`Scraped: ${data.name}\nPrice: ${data.currency} ${data.price}\nIn Stock: ${data.in_stock}`);
+                loadStats();
+            } catch (e) {
+                alert('Scrape failed');
+            }
+        }
+
+        async function scrapeAll() {
+            try {
+                const res = await fetch(`${API_URL}/scrape-all/`, { method: 'POST' });
+                const data = await res.json();
+                alert(`Scraped ${data.scraped} products`);
+                loadStats();
+            } catch (e) {
+                alert('Scrape failed');
+            }
+        }
+
+        async function discoverProducts() {
+            const category = document.getElementById('discover-category').value;
+            const max = document.getElementById('discover-max').value;
+
+            try {
+                const res = await fetch(`${API_URL}/discover/?category=${category}&max_products=${max}`);
+                const data = await res.json();
+                document.getElementById('discover-results').innerHTML = `
+                    <h3>Found ${data.products_found} products</h3>
+                    <ul>${data.urls.map(url => `<li><a href="${url}" target="_blank">${url}</a></li>`).join('')}</ul>
+                `;
+            } catch (e) {
+                document.getElementById('discover-results').innerHTML = '<p class="message error">Discovery failed</p>';
+            }
+        }
+
+        async function loadHistory() {
+            const id = document.getElementById('history-product').value;
+            if (!id) return;
+
+            try {
+                const res = await fetch(`${API_URL}/price-history/${id}`);
+                const history = await res.json();
+                document.getElementById('history-results').innerHTML = `
+                    <table>
+                        <thead><tr><th>Price</th><th>Currency</th><th>In Stock</th><th>Date</th></tr></thead>
+                        <tbody>
+                            ${history.map(h => `
+                                <tr>
+                                    <td class="price">${h.price.toLocaleString()}</td>
+                                    <td>${h.currency}</td>
+                                    <td class="${h.in_stock ? 'in-stock' : 'out-of-stock'}">${h.in_stock ? 'In Stock' : 'Out of Stock'}</td>
+                                    <td>${new Date(h.scraped_at).toLocaleString()}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } catch (e) {
+                document.getElementById('history-results').innerHTML = '<p class="message error">Failed to load history</p>';
+            }
+        }
+
+        function showMessage(elementId, text, type) {
+            document.getElementById(elementId).innerHTML = `<div class="message ${type}">${text}</div>`;
+        }
+
+        // Load initial data
+        loadStats();
+        loadProducts();
+    </script>
+</body>
+</html>
